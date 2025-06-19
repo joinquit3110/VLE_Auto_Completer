@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "VLE Auto Completer",
+  "version": "1.0",
+  "description": "Auto complete VLE courses",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://vle.hcmue.edu.vn/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://vle.hcmue.edu.vn/courses/student-view/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+} 
