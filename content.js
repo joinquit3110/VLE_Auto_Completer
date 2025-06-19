@@ -175,6 +175,50 @@
         return { success: false, error: 'All position_data variants failed' };
     };
 
+    // Direct API call for HTML or PDF modules (single progress)
+    const callSingleProgressAPI = async (dataId) => {
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            log('❌ No CSRF token found');
+            return { success: false, error: 'No CSRF token' };
+        }
+
+        const formData = new URLSearchParams();
+        formData.append('course_data', dataId);
+        formData.append('version_number', '3');
+        formData.append('_csrfToken', csrfToken);
+
+        try {
+            log(`🚀 Calling update-single-progress for content module`);
+            const response = await fetch('https://vle.hcmue.edu.vn/courses/update-single-progress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData,
+                credentials: 'include'
+            });
+
+            const text = await response.text();
+            log(`📡 Single progress response: ${response.status}`);
+            log(`📄 Raw: ${text}`);
+
+            if (response.ok) {
+                try {
+                    const json = JSON.parse(text);
+                    return { success: true, response: json, modulesCompleted: json.modules_completed, progressLevel: json.progress };
+                } catch (_) {
+                    return { success: true, response: text };
+                }
+            }
+            return { success: false, error: `HTTP ${response.status}` };
+
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    };
+
     // Test API with detailed debugging
     window.testAPI = async (moduleIndex) => {
         const info = getModuleInfo(moduleIndex);
@@ -300,8 +344,8 @@
 
         log(`📄 Processing ${info.contentType} ${info.index} with data-id: ${info.dataId}`);
         
-        // Direct API call for content completion
-        const result = await callProgressAPI(info.dataId);
+        // Use single-progress endpoint for HTML/PDF
+        const result = await callSingleProgressAPI(info.dataId);
         
         if (result.success) {
             if (result.progressChanged) {
